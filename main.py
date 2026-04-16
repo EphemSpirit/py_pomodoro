@@ -9,20 +9,57 @@ FONT_NAME = "Courier"
 WORK_MIN = 25
 SHORT_BREAK_MIN = 5
 LONG_BREAK_MIN = 20
+reps = 0
+timer = None
 
-# ---------------------------- TIMER RESET ------------------------------- # 
+# ---------------------------- TIMER RESET ------------------------------- #
+
+def reset_timer():
+    window.after_cancel(timer)
+    checkmarks.config(text="")
+    canvas.itemconfig(timer_text, text="00:00")
+    timer_label.config(text="Timer")
+
+    global reps
+    reps = 0
 
 # ---------------------------- TIMER MECHANISM ------------------------------- #
 def start_timer():
-    countdown(WORK_MIN * 60)
+    global reps
+    reps += 1
+    work_secs = WORK_MIN * 60
+    short_break_secs = SHORT_BREAK_MIN * 60
+    long_break_secs = LONG_BREAK_MIN * 60
+
+    if reps % 8 == 0:
+        countdown(long_break_secs)
+        timer_label.config(text="Break", fg=RED)
+    elif reps % 2 == 0:
+        countdown(short_break_secs)
+        timer_label.config(text="Break", fg=PINK)
+    else:
+        countdown(work_secs)
+        timer_label.config(text="Work", fg=GREEN)
 
 # ---------------------------- COUNTDOWN MECHANISM ------------------------------- #
 def countdown(count):
     count_min = math.floor(count / 60)
     count_sec = count % 60
+
+    if count_sec == 0:
+        count_sec = "00"
+
     canvas.itemconfig(timer_text, text=f"{count_min}:{count_sec}")
     if count > 0:
-        window.after(1000, countdown, count - 1)
+        global timer
+        timer = window.after(1000, countdown, count - 1)
+    else:
+        start_timer()
+        marks = ""
+        for _ in range(math.floor(reps / 2)):
+            marks += "✓"
+        checkmarks.config(text=marks)
+
 
 # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
@@ -41,10 +78,10 @@ canvas.grid(column=1, row=1)
 start_button = Button(text="Start", command=start_timer)
 start_button.grid(column=0, row=2)
 
-reset_button = Button(text="Reset")
+reset_button = Button(text="Reset", command=reset_timer)
 reset_button.grid(column=2, row=2)
 
-checkmarks = Label(text="✓", bg=YELLOW, fg=GREEN)
+checkmarks = Label(bg=YELLOW, fg=GREEN)
 checkmarks.grid(column=1, row=3)
 
 window.mainloop()
